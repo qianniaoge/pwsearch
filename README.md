@@ -11,7 +11,11 @@ pip3 install pymediawiki
 cd /opt
 git https://github.com/JustYoomoon/PwnDatas-DB-Project.git
 cd
-echo alias vulsearch="python3 /opt/PwnDatas-DB-Project/vulsearch.py"
+
+.bashrc加入
+alias vulsearch="python3 /opt/PwnDatas-DB-Project/vulsearch.py"
+
+source .bashrc
 ```
 
 ```
