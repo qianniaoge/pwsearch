@@ -21,6 +21,8 @@ if args.version:
     print("\033[1;34m[Version]\033[0m PwnDatas-DB-Project(PDDP) & vulsearch Jun.6 2021") #Blue
 
 if args.number:
+    #默認
+    number = "20"
     number = args.number[0]
     number = ','.join(str(i) for i in number)
     #print(number)
