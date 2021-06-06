@@ -4,6 +4,7 @@ PwnDatas-DB-Project(PDDP)
 安裝依賴：
 ```
 pip3 install pymediawiki
+pip3 install requests
 ```
 
 使用：
@@ -19,10 +20,16 @@ source .bashrc
 ```
 
 ```
-vulsearch <NAME>
+vulsearch <option>
 
 舉例：
-vulsearch CVE-2019-0708
+vulsearch -s CVE-2019-0708
+
+查看版本：
+vulsearch -v
+
+指定語言查詢(開發中)：
+vulsearch -s <Vul Name> -l <Language Code>
 ```
 
 截圖：
