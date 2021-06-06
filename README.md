@@ -30,6 +30,9 @@ vulsearch -v
 
 指定語言查詢(開發中)：
 vulsearch -s <Vul Name> -l <Language Code>
+
+指定行數輸出（舉例爲30）：
+vulsearch -n 30 -s <Vul Name>
 ```
 
 截圖：
