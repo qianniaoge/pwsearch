@@ -1,52 +1,38 @@
-# PwnDatas-DB-Project
-PwnDatas-DB-Project(PDDP)
+# pwsearch
 
-安裝依賴：
-```
-pip3 install pymediawiki
-pip3 install requests
-```
+PwnWiki 数据库搜索命令行工具。
 
-使用：
-```
-cd /opt
-git https://github.com/JustYoomoon/PwnDatas-DB-Project.git
-cd
+## 安装
 
-.bashrc加入
-alias vulsearch="python3 /opt/PwnDatas-DB-Project/vulsearch.py"
+*该应用处于 alpha 测试阶段，该页面内容不准确。*
 
-source .bashrc
+您可以直接用 `pip` 命令从 PyPI 安装 pwsearch：
+
+```shell
+pip install -U pwsearch
 ```
 
-```
-vulsearch <option>
+您也可以 clone 该仓库并直接从源码启动：
 
-舉例：
-vulsearch -s CVE-2019-0708
-
-查看版本：
-vulsearch -v
-
-指定語言查詢(開發中)：
-vulsearch -s <Vul Name> -l <Language Code>
-
-指定行數輸出（舉例爲30）：
-vulsearch -n 30 -s <Vul Name>
+```shell
+git clone https://github.com/k4yt3x/pwsearch
+cd pwsearch
+pip install -U -r pwsearch/requirements.txt
+python -m pwsearch -k CVE
 ```
 
-截圖：
-![](https://github.com/JustYoomoon/PwnDatas-DB-Project/blob/main/3156.png)
-![](https://github.com/JustYoomoon/PwnDatas-DB-Project/blob/main/3164.png)
+## 使用方法
 
-社區：
-https://forums.pwnwiki.org/t/23
+```shell
+# 搜寻关键词
+pwsearch -k CVE-2019-0708
 
+# 最大搜索结果
+pwsearch -r 20 -k CVE-2019
+```
 
-PwnWiki:
-https://www.pwnwiki.org
+## 友情链接
 
-
-中文Telegram群組:
-
-https://t.me/pwnwiki_zh
+- 社區: https://forums.pwnwiki.org/t/23
+- PwnWiki: https://www.pwnwiki.org
+- 中文 Telegram 群組: https://t.me/pwnwiki_zh
