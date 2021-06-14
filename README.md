@@ -25,10 +25,10 @@ python -m pwsearch -k CVE
 
 ```shell
 # 搜寻关键词
-pwsearch -k CVE-2019-0708
+pwsearch search CVE-2019-0708
 
-# 最大搜索结果
-pwsearch -r 20 -k CVE-2019
+# 在浏览器中打开详细页面
+pwsearch open -p 2051
 ```
 
 ## 友情链接

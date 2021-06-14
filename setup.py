@@ -19,7 +19,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="pwsearch",
     version="1.0.0",
-    author="K4YT3X",
+    author="JustYoomoon",
     author_email="k4yt3x@k4yt3x.com",
     description="PwnWiki 命令行搜索工具",
     long_description=LONG_DESCRIPTION,
@@ -27,7 +27,7 @@ setuptools.setup(
     url="https://github.com/k4yt3x/pwsearch",
     packages=setuptools.find_packages(),
     license="GNU General Public License v3.0",
-    install_requires=["pymediawiki", "rich"],
+    install_requires=["pymediawiki", "rich", "tqdm", "loguru"],
     classifiers=[
         "Topic :: Security",
         "Environment :: Console",
