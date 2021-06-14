@@ -23,6 +23,8 @@ python -m pwsearch -k CVE
 
 ## 使用方法
 
+![image](https://user-images.githubusercontent.com/21986859/121893584-1f098d80-ccec-11eb-927f-4d377807eb6f.png)
+
 ```shell
 # 搜寻关键词
 pwsearch search CVE-2019-0708
