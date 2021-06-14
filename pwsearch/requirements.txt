@@ -1,3 +1,4 @@
+loguru
 pymediawiki
-requests
 rich
+tqdm
