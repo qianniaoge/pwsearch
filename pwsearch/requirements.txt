@@ -1,4 +1,7 @@
+gevent
+grequests
 loguru
 pymediawiki
+requests
 rich
 tqdm

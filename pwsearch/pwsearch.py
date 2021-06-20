@@ -10,6 +10,12 @@ Dev: K4YT3X
 Last Modified: Jun 19, 2021
 """
 
+# fmt: off
+# monkey patch gevent before ssl is imported
+from gevent import monkey
+monkey.patch_all()
+# fmt: on
+
 # built-in imports
 from typing import Union
 import argparse
@@ -32,15 +38,28 @@ PWNWIKI_PAGE_BYTITLE = "https://www.pwnwiki.org/index.php?title={}"
 PWNWIKI_API_TITLE = "https://www.pwnwiki.org/api.php?action=parse&page={}&contentmodel=wikitext&format=json"
 PWNWIKI_API_PAGEID = "https://www.pwnwiki.org/api.php?action=parse&pageid={}&contentmodel=wikitext&format=json"
 
-# maximum concurrent requests to launch at a time
-MAX_CONCURRENT_REQUESTS = 10
-
 
 class Pwsearch:
-    def __init__(self):
-        self.pwnwiki = MediaWiki(url="https://www.pwnwiki.org/api.php")
+    """PwnWiki searcher"""
+
+    def __init__(self, url="https://www.pwnwiki.org/api.php"):
+        """class initialization function
+
+        Args:
+            url (str, optional): PwnWiki API URL. Defaults to "https://www.pwnwiki.org/api.php".
+        """
+        self.pwnwiki = MediaWiki(url=url)
 
     def search(self, keywords: list, max_results: int = 20) -> Union[list, None]:
+        """use opensearch to search for a series of keywords
+
+        Args:
+            keywords (list): keywords to search for
+            max_results (int, optional): maximum returning results. Defaults to 20.
+
+        Returns:
+            Union[list, None]: None if nothing found, else a list of results
+        """
         raw_results = self.pwnwiki.opensearch(",".join(keywords), results=max_results)
 
         # return None if no results are found
@@ -54,6 +73,18 @@ class Pwsearch:
         return results
 
     def page(self, pageid: int = None, title: str = None) -> Union[dict, None]:
+        """retrieve detailed information about a single page
+
+        Args:
+            pageid (int, optional): MediaWiki pageid. Defaults to None.
+            title (str, optional): MediaWiki page title. Defaults to None.
+
+        Raises:
+            AttributeError: raised if neither pageid nor title are specified
+
+        Returns:
+            Union[dict, None]: None if information retrieval has failed, else dict
+        """
 
         if pageid:
             page = requests.get(PWNWIKI_API_PAGEID.format(pageid))
@@ -72,18 +103,36 @@ class Pwsearch:
         except json.decoder.JSONDecodeError:
             return None
 
-    def pages(self, pageids: list = None, titles: list = None) -> list:
+    def pages(
+        self, pageids: list = None, titles: list = None, max_concurrency: int = 10
+    ) -> list:
+        """asynchronously retrieve detailed information about multiple pages
+
+        Args:
+            pageids (list, optional): MediaWiki pageids. Defaults to None.
+            titles (list, optional): MediaWiki page titles. Defaults to None.
+            max_concurrency (int, optional): maximum number of concurrent requests. Defaults to 10.
+
+        Raises:
+            AttributeError: raised when neither pageids nor titles are specified
+
+        Returns:
+            list: list of results
+        """
 
         responses = []
 
+        # for both pageids and titles:
+        # divide the requests into evenly sized chunks
+        # map one chunk at a time
         if pageids:
-            for chunk in chunks(pageids, MAX_CONCURRENT_REQUESTS):
+            for chunk in chunks(pageids, max_concurrency):
                 request_set = (
                     grequests.get(PWNWIKI_API_PAGEID.format(p)) for p in chunk
                 )
                 responses += grequests.map(request_set)
         elif titles:
-            for chunk in chunks(titles, MAX_CONCURRENT_REQUESTS):
+            for chunk in chunks(titles, max_concurrency):
                 request_set = (
                     grequests.get(PWNWIKI_API_TITLE.format(urllib.parse.quote(t)))
                     for t in chunk
@@ -92,6 +141,7 @@ class Pwsearch:
         else:
             raise AttributeError("either pageid or title has to be specified")
 
+        # analyze responses and add results into list
         results = []
         for response in responses:
             if response is None or not response.ok:
