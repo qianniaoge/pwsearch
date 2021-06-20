@@ -36,6 +36,6 @@ pwsearch open -p 2051
 
 ## 友情链接
 
-- 社區: https://forums.pwnwiki.org/t/23
+- 社區: https://forums.pwnwiki.org
 - PwnWiki: https://www.pwnwiki.org
 - 中文 Telegram 群組: https://t.me/pwnwiki_zh
