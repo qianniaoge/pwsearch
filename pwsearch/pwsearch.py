@@ -23,6 +23,7 @@ from mediawiki import MediaWiki
 from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
+import grequests
 import requests
 
 
@@ -31,13 +32,16 @@ PWNWIKI_PAGE_BYTITLE = "https://www.pwnwiki.org/index.php?title={}"
 PWNWIKI_API_TITLE = "https://www.pwnwiki.org/api.php?action=parse&page={}&contentmodel=wikitext&format=json"
 PWNWIKI_API_PAGEID = "https://www.pwnwiki.org/api.php?action=parse&pageid={}&contentmodel=wikitext&format=json"
 
+# maximum concurrent requests to launch at a time
+MAX_CONCURRENT_REQUESTS = 10
+
 
 class Pwsearch:
     def __init__(self):
         self.pwnwiki = MediaWiki(url="https://www.pwnwiki.org/api.php")
 
     def search(self, keywords: list, max_results: int = 20) -> Union[list, None]:
-        raw_results = self.pwnwiki.opensearch(" ".join(keywords), results=max_results)
+        raw_results = self.pwnwiki.opensearch(",".join(keywords), results=max_results)
 
         # return None if no results are found
         if len(raw_results) <= 0:
@@ -64,15 +68,55 @@ class Pwsearch:
             return None
 
         try:
-            parsed = page.json()
-
-            if "parse" not in parsed:
-                return None
-
-            return parsed["parse"]
-
+            return page.json().get("parse")
         except json.decoder.JSONDecodeError:
             return None
+
+    def pages(self, pageids: list = None, titles: list = None) -> list:
+
+        responses = []
+
+        if pageids:
+            for chunk in chunks(pageids, MAX_CONCURRENT_REQUESTS):
+                request_set = (
+                    grequests.get(PWNWIKI_API_PAGEID.format(p)) for p in chunk
+                )
+                responses += grequests.map(request_set)
+        elif titles:
+            for chunk in chunks(titles, MAX_CONCURRENT_REQUESTS):
+                request_set = (
+                    grequests.get(PWNWIKI_API_TITLE.format(urllib.parse.quote(t)))
+                    for t in chunk
+                )
+                responses += grequests.map(request_set)
+        else:
+            raise AttributeError("either pageid or title has to be specified")
+
+        results = []
+        for response in responses:
+            if response is None or not response.ok:
+                results.append(None)
+            else:
+                try:
+                    results.append(response.json().get("parse"))
+                except json.decoder.JSONDecodeError:
+                    results.append(None)
+
+        return results
+
+
+def chunks(lst: list, n: int) -> list:
+    """yield successive n-sized chunks from lst
+
+    Args:
+        lst (list): input list
+        n (int): chunk size
+
+    Yields:
+        list: evenly split chunks
+    """
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
 
 def parse_arguments() -> argparse.Namespace:
