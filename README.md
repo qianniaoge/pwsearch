@@ -9,16 +9,17 @@ PwnWiki 数据库搜索命令行工具。
 您可以直接用 `pip` 命令从 PyPI 安装 pwsearch：
 
 ```shell
-pip install -U pwsearch
+pip3 install -U pwsearch
 ```
 
 您也可以 clone 该仓库并直接从源码启动：
 
 ```shell
-git clone https://github.com/k4yt3x/pwsearch
+git clone https://github.com/pwnwikiorg/pwsearch.git
 cd pwsearch
-pip install -U -r pwsearch/requirements.txt
-python -m pwsearch -k CVE
+pip3 install -U -r pwsearch/requirements.txt
+pwsearch search <Keyword> -t
+pwsearch open -p <Page ID>
 ```
 
 ## 使用方法
@@ -35,6 +36,6 @@ pwsearch open -p 2051
 
 ## 友情链接
 
-- 社區: https://forums.pwnwiki.org/t/23
+- 社區: https://forums.pwnwiki.org
 - PwnWiki: https://www.pwnwiki.org
 - 中文 Telegram 群組: https://t.me/pwnwiki_zh
