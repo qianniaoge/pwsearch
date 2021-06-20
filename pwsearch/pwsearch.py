@@ -98,22 +98,21 @@ def main():
                 table.add_column("URL", style="bold white")
 
                 # add all search results as rows
-                for page in tqdm(range(len(search_results)), desc="Searching Database"):
+                for result in tqdm(search_results, desc="Searching Database"):
+                    page = pwnwiki.page(result[0])
                     table.add_row(
-                        pwnwiki.page(search_results[page][0]).pageid,
-                        search_results[page][0],
-                        search_results[page][2],
+                        page.pageid,
+                        page.title,
+                        page.url,
                     )
 
                 # print table
                 console.print(table)
 
             else:
-                for page in range(len(search_results)):
-                    console.print(
-                        f"Title: {search_results[page][0]}", style="bold cyan"
-                    )
-                    console.print(f"URL: {search_results[page][2]}")
+                for result in search_results:
+                    console.print(f"Title: {result[0]}", style="bold cyan")
+                    console.print(f"URL: {result[2]}")
                     console.print()
 
         # open a given page (by pageid/title) in web browser
