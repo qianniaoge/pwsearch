@@ -4,8 +4,6 @@ PwnWiki 数据库搜索命令行工具。
 
 ## 安装
 
-*该应用处于 alpha 测试阶段，该页面内容不准确。*
-
 您可以直接用 `pip` 命令从 PyPI 安装 pwsearch：
 
 ```shell
@@ -39,3 +37,4 @@ pwsearch open -p 2051
 - 社區: https://forums.pwnwiki.org
 - PwnWiki: https://www.pwnwiki.org
 - 中文 Telegram 群組: https://t.me/pwnwiki_zh
+
