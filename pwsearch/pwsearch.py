@@ -7,13 +7,13 @@ Date Created: May 27, 2021
 Last Modified: June 7, 2021
 
 Dev: K4YT3X
-Last Modified: Jun 19, 2021
+Last Modified: Jun 20, 2021
 """
 
 # fmt: off
 # monkey patch gevent before ssl is imported
 from gevent import monkey
-monkey.patch_all()
+monkey.patch_all(thread=False, select=False)
 # fmt: on
 
 # built-in imports
@@ -28,7 +28,6 @@ from loguru import logger
 from mediawiki import MediaWiki
 from rich.console import Console
 from rich.table import Table
-from tqdm import tqdm
 import grequests
 import requests
 
@@ -50,27 +49,20 @@ class Pwsearch:
         """
         self.pwnwiki = MediaWiki(url=url)
 
-    def search(self, keywords: list, max_results: int = 20) -> Union[list, None]:
-        """use opensearch to search for a series of keywords
+    def search(self, keywords: list, max_results: int = 20) -> list:
+        """search for a series of keywords
 
         Args:
             keywords (list): keywords to search for
             max_results (int, optional): maximum returning results. Defaults to 20.
 
         Returns:
-            Union[list, None]: None if nothing found, else a list of results
+            list: a list of results
         """
-        raw_results = self.pwnwiki.opensearch(",".join(keywords), results=max_results)
+        if max_results <= 0:
+            raise ValueError("max_results must > 0")
 
-        # return None if no results are found
-        if len(raw_results) <= 0:
-            return None
-
-        results = []
-        for result in raw_results:
-            results.append({"title": result[0], "url": result[2]})
-
-        return results
+        return list(self.pwnwiki.search(" ".join(keywords), results=max_results))
 
     def page(self, pageid: int = None, title: str = None) -> Union[dict, None]:
         """retrieve detailed information about a single page
@@ -99,7 +91,14 @@ class Pwsearch:
             return None
 
         try:
-            return page.json().get("parse")
+            page_dict = page.json().get("parse")
+            if page_dict is None:
+                return None
+
+            page_dict["url"] = PWNWIKI_PAGE_BYTITLE.format(
+                urllib.parse.quote(page_dict["title"])
+            )
+            return page_dict
         except json.decoder.JSONDecodeError:
             return None
 
@@ -148,7 +147,14 @@ class Pwsearch:
                 results.append(None)
             else:
                 try:
-                    results.append(response.json().get("parse"))
+                    response_dict = response.json().get("parse")
+                    if response_dict is None:
+                        results.append(None)
+                    else:
+                        response_dict["url"] = PWNWIKI_PAGE_BYTITLE.format(
+                            urllib.parse.quote(response_dict["title"])
+                        )
+                        results.append(response_dict)
                 except json.decoder.JSONDecodeError:
                     results.append(None)
 
@@ -242,21 +248,37 @@ def main():
                 table.add_column("URL", style="bold white")
 
                 # add all search results as rows
-                for result in tqdm(results, desc="Searching Database"):
-                    page = pwsearch.page(title=result["title"])
-                    table.add_row(
-                        str(page["pageid"]),
-                        page["displaytitle"],
-                        result["url"],
-                    )
+                pages = pwsearch.pages(titles=results)
+                for index in range(len(pages)):
+                    page = pages[index]
+                    if page is None:
+                        table.add_row(
+                            "None",
+                            results[index],
+                            "None",
+                        )
+                    else:
+                        table.add_row(
+                            str(page["pageid"]),
+                            page["displaytitle"],
+                            page["url"],
+                        )
 
                 # print table
                 console.print(table)
 
             else:
-                for result in results:
-                    console.print(f"Title: {result['title']}", style="bold cyan")
-                    console.print(f"URL: {result['url']}")
+                pages = pwsearch.pages(titles=results)
+                for index in range(len(pages)):
+                    page = pages[index]
+                    if page is None:
+                        console.print(f"Title: {results[index]}", style="bold cyan")
+                        console.print("URL: None")
+                    else:
+                        console.print(
+                            f"Title: {page['displaytitle']}", style="bold cyan"
+                        )
+                        console.print(f"URL: {page['url']}")
                     console.print()
 
         # open a given page (by pageid/title) in web browser
