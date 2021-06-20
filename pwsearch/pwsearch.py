@@ -149,7 +149,7 @@ def main():
 
                 # add all search results as rows
                 for result in tqdm(results, desc="Searching Database"):
-                    page = pwsearch.page(result["title"])
+                    page = pwsearch.page(title=result["title"])
                     table.add_row(
                         str(page["pageid"]),
                         page["displaytitle"],
