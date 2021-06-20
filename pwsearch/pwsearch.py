@@ -13,7 +13,7 @@ Last Modified: Jun 20, 2021
 # fmt: off
 # monkey patch gevent before ssl is imported
 from gevent import monkey
-monkey.patch_all(thread=False, select=False)
+monkey.patch_all()
 # fmt: on
 
 # built-in imports
