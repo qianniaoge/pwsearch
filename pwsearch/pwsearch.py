@@ -7,11 +7,14 @@ Date Created: May 27, 2021
 Last Modified: June 7, 2021
 
 Dev: K4YT3X
-Last Modified: Jun 14, 2021
+Last Modified: Jun 19, 2021
 """
 
 # built-in imports
+from typing import Union
 import argparse
+import json
+import urllib.parse
 import webbrowser
 
 # third-party imports
@@ -20,6 +23,56 @@ from mediawiki import MediaWiki
 from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
+import requests
+
+
+# URL to use for looking up page details
+PWNWIKI_PAGE_BYTITLE = "https://www.pwnwiki.org/index.php?title={}"
+PWNWIKI_API_TITLE = "https://www.pwnwiki.org/api.php?action=parse&page={}&contentmodel=wikitext&format=json"
+PWNWIKI_API_PAGEID = "https://www.pwnwiki.org/api.php?action=parse&pageid={}&contentmodel=wikitext&format=json"
+
+
+class Pwsearch:
+    def __init__(self):
+        self.pwnwiki = MediaWiki(url="https://www.pwnwiki.org/api.php")
+
+    def search(self, keywords: list, max_results: int = 20) -> Union[list, None]:
+        raw_results = self.pwnwiki.opensearch(" ".join(keywords), results=max_results)
+
+        # return None if no results are found
+        if len(raw_results) <= 0:
+            return None
+
+        results = []
+        for result in raw_results:
+            results.append({"title": result[0], "url": result[2]})
+
+        return results
+
+    def page(self, pageid: int = None, title: str = None) -> Union[dict, None]:
+
+        if pageid:
+            page = requests.get(PWNWIKI_API_PAGEID.format(pageid))
+        elif title:
+            page = requests.get(PWNWIKI_API_TITLE.format(urllib.parse.quote(title)))
+        else:
+            raise AttributeError("either pageid or title has to be specified")
+
+        # if server did not return 2xx
+        #   detail retrieval has failed
+        if not page.ok:
+            return None
+
+        try:
+            parsed = page.json()
+
+            if "parse" not in parsed:
+                return None
+
+            return parsed["parse"]
+
+        except json.decoder.JSONDecodeError:
+            return None
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -48,8 +101,8 @@ def parse_arguments() -> argparse.Namespace:
         nargs="*",
     )
     search.add_argument(
-        "-r",
-        "--results",
+        "-m",
+        "--max",
         type=int,
         help="maximum number of results to show",
         default=20,
@@ -75,18 +128,15 @@ def main():
     # rich console for printing output
     console = Console()
 
+    # create new Pwsearch instance
+    pwsearch = Pwsearch()
+
     try:
-        # create MediaWiki instance for PwnWiki
-        pwnwiki = MediaWiki(
-            url="https://www.pwnwiki.org/api.php",
-            user_agent="Mozilla/5.0 (Windows NT 10.0; WOW64",
-        )
 
         if args.command == "search":
-            keywords = " ".join(args.keywords)
-            search_results = pwnwiki.opensearch(keywords, results=args.results)
+            results = pwsearch.search(args.keywords, max_results=args.max)
 
-            if len(search_results) == 0:
+            if results is None:
                 console.print("no search results found", style="bold red")
                 return
 
@@ -98,29 +148,34 @@ def main():
                 table.add_column("URL", style="bold white")
 
                 # add all search results as rows
-                for result in tqdm(search_results, desc="Searching Database"):
-                    page = pwnwiki.page(result[0])
+                for result in tqdm(results, desc="Searching Database"):
+                    page = pwsearch.page(result["title"])
                     table.add_row(
-                        page.pageid,
-                        page.title,
-                        page.url,
+                        str(page["pageid"]),
+                        page["displaytitle"],
+                        result["url"],
                     )
 
                 # print table
                 console.print(table)
 
             else:
-                for result in search_results:
-                    console.print(f"Title: {result[0]}", style="bold cyan")
-                    console.print(f"URL: {result[2]}")
+                for result in results:
+                    console.print(f"Title: {result['title']}", style="bold cyan")
+                    console.print(f"URL: {result['url']}")
                     console.print()
 
         # open a given page (by pageid/title) in web browser
         elif args.command == "open":
-            if args.pageid:
-                webbrowser.open(pwnwiki.page(pageid=args.pageid).url, new=2)
-            elif args.title:
-                webbrowser.open(pwnwiki.page(title=args.title).url, new=2)
+            if args.pageid or args.title:
+                webbrowser.open(
+                    PWNWIKI_PAGE_BYTITLE.format(
+                        urllib.parse.quote(
+                            pwsearch.page(pageid=args.pageid, title=args.title)["title"]
+                        )
+                    ),
+                    new=2,
+                )
             else:
                 logger.critical("neither pageid nor title is provided")
 
